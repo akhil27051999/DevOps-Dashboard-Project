@@ -1,23 +1,20 @@
-# Step 1: Build Stage
-FROM node:18 AS builder
+# Use a Node image
+FROM node:18
 
+# Set working directory
 WORKDIR /app
 
+# Copy only package.json and package-lock.json first
 COPY package*.json ./
+
+# Install dependencies first (cache layer)
 RUN npm install
 
-COPY . .    # Copy AFTER install so build can access src/public
+# Now copy all project files (including src/public etc.)
+COPY . .
+
+# Build the app
 RUN npm run build
 
-# Step 2: Serve Stage
-FROM node:18-slim
-
-WORKDIR /app
-
-RUN npm install -g serve
-
-COPY --from=builder /app/build ./build
-
-EXPOSE 3000
-
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Serve the app
+CMD ["npm", "start"]
