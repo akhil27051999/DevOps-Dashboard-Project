@@ -1,40 +1,33 @@
-# ----------------------
-# Stage 1: Build the React app
-# ----------------------
+# Stage 1: Build React App
 FROM node:18-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy only package.json and package-lock.json first
+# Copy dependencies first
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
-# Copy all project files (src/, public/, etc.)
+# Copy the rest of the code
 COPY . .
 
-# Build the app
-RUN npm run build || (echo "BUILD FAILED: Dumping logs" && ls -la && cat /app/npm-debug.log || true)
+# Build the frontend
+RUN npm run build
 
-
-# ----------------------
-# Stage 2: Serve the app using a lightweight web server
-# ----------------------
+# Stage 2: Serve React Build
 FROM node:18-alpine
 
-# Install 'serve' globally
-RUN npm install -g serve
-
-# Set working directory
 WORKDIR /app
 
-# Copy build output from the previous stage
+# Install serve globally
+RUN npm install -g serve
+
+# Copy build output from previous stage
 COPY --from=build /app/build ./build
 
-# Expose the port (change if your app uses a different one)
+# Expose port
 EXPOSE 3000
 
-# Serve the production build
+# Start app
 CMD ["serve", "-s", "build", "-l", "3000"]
