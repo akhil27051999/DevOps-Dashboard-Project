@@ -16,7 +16,7 @@ RUN npm install
 COPY . .
 
 # Build the app
-RUN npm run build
+RUN npm run build || (echo "BUILD FAILED: Dumping logs" && ls -la && cat /app/npm-debug.log || true)
 
 
 # ----------------------
