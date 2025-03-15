@@ -6,15 +6,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .    # NOW copy all code AFTER install so build can find src/
+COPY . .    # Copy AFTER install so build can access src/public
 RUN npm run build
 
-# Step 2: Serve Stage (Production)
+# Step 2: Serve Stage
 FROM node:18-slim
 
 WORKDIR /app
 
-# Install only the "serve" package for serving the static build
 RUN npm install -g serve
 
 COPY --from=builder /app/build ./build
