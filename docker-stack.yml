@@ -1,0 +1,65 @@
+version: '3.8'
+services:
+  frontend:
+    image: devops-dashboard_frontend
+    deploy:
+      replicas: 2
+    networks:
+      - frontend-net
+  backend:
+    image: devops-dashboard_backend
+    deploy:
+      replicas: 2
+    networks:
+      - backend-net
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    networks:
+      - frontend-net
+      - backend-net
+  db:
+    image: postgres:14
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    networks:
+      - backend-net
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitor-net
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitor-net
+  logstash:
+    image: devops-dashboard_logstash
+    ports:
+      - "5044:5044"
+    networks:
+      - log-net
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+    networks:
+      - log-net
+volumes:
+  db_data:
+  grafana_data:
+networks:
+  frontend-net:
+  backend-net:
+  monitor-net:
+  log-net:
