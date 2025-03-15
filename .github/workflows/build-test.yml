@@ -1,0 +1,45 @@
+# .github/workflows/build-test.yml
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Backend Docker Image
+      run: docker build -t dashboard-backend ./backend
+
+    - name: Build Frontend Docker Image
+      run: docker build -t dashboard-frontend ./frontend
+
+    - name: Build Logstash Docker Image
+      run: docker build -t dashboard-logstash ./logstash
+
+    - name: Run Docker Compose (Test Services Up)
+      run: |
+        docker compose up -d
+        sleep 15
+        docker compose ps
+
+    - name: Verify Backend Container Status
+      run: |
+        BACKEND_STATUS=$(docker inspect -f '{{.State.Status}}' $(docker ps -aqf "name=backend"))
+        echo "Backend Container Status: $BACKEND_STATUS"
+
